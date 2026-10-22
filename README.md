@@ -18,6 +18,8 @@ python -m http.server 4173
 4. Click text to edit it. Select a photo to change its HTTPS image URL or accessibility description. Use **Add story** to create an article.
 5. Select **Save to GitHub** to commit the edits to `content.json` on `main`. GitHub Pages deploys the commit to the public site after its build completes.
 
+The editor confirms the connection after checking repository access. If `content.json` does not exist in the repository yet, the first successful save creates it. The editor itself must first be published to GitHub before these controls are available on the public site.
+
 Text edits, image URLs and descriptions, and added articles are published through `content.json`. Photos remain hosted at their HTTPS image URLs; this editor changes the photo reference rather than uploading image files.
 
 The visual design is an original lifestyle-magazine layout and is not affiliated with The Everygirl.

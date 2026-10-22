@@ -198,7 +198,6 @@ function normalizeContent(data) {
 function githubHeaders(token) {
   return {
     Accept: "application/vnd.github+json",
-    ["Authorization"]: ["Bearer", token].join(" "),
     Authorization: `Bearer ${token}`,
     "X-GitHub-Api-Version": "2022-11-28",
   };
@@ -302,7 +301,8 @@ async function connectGithub() {
   }
 
   button.disabled = true;
-  status.textContent = "Connecting to GitHub…";
+  button.textContent = "CONNECTING…";
+  status.textContent = "Checking your token and repository access…";
   try {
     const remote = await readGithubContent(token);
     const draftContent = Object.fromEntries([...dirtyContent].map((key) => [key, siteContent.content[key]]));
@@ -338,6 +338,7 @@ async function connectGithub() {
     renderCurrentContent();
   } catch (error) {
     console.error("Could not connect to GitHub.", error);
+    button.textContent = "CONNECT";
     status.textContent = error instanceof TypeError
       ? "Could not reach GitHub. Check your connection and try again."
       : error.message;
