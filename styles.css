@@ -1025,6 +1025,57 @@ h2 em {
   font-size: 11px;
 }
 
+.github-token-label,
+.image-editor-label {
+  display: block;
+  margin-top: 12px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.github-token-help {
+  margin: 5px 0 8px !important;
+  font-size: 9px !important;
+  line-height: 1.5;
+}
+
+.github-token-help a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.github-connect-row {
+  display: flex;
+  gap: 6px;
+}
+
+.github-connect-row input,
+.image-alt-input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  font-size: 10px;
+}
+
+.github-connect-row button {
+  padding-inline: 10px;
+  border: 1px solid var(--ink);
+  background: white;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.github-save-status {
+  min-height: 14px;
+  margin: 6px 0 12px !important;
+  color: var(--muted);
+  font-size: 9px !important;
+  line-height: 1.5;
+}
+
 .editor-actions {
   display: flex;
   gap: 8px;
@@ -1047,13 +1098,6 @@ h2 em {
   color: white;
 }
 
-.image-editor-label {
-  display: block;
-  margin-top: 13px;
-  font-size: 9px;
-  font-weight: 600;
-}
-
 .image-editor-row {
   margin-top: 6px;
   display: flex;
@@ -1066,6 +1110,10 @@ h2 em {
   padding: 8px;
   border: 1px solid var(--line);
   font-size: 10px;
+}
+
+.image-alt-input {
+  margin-top: 6px;
 }
 
 .image-editor-row button {
@@ -1508,6 +1556,13 @@ body.is-editing [data-editable]:focus {
 
   .newsletter-form {
     grid-column: 1 / -1;
+  }
+
+  .editor-toolbar {
+    right: 12px;
+    bottom: 12px;
+    max-height: min(72vh, 520px);
+    overflow-y: auto;
   }
 
   .footer-top,

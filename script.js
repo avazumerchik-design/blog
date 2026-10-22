@@ -7,10 +7,11 @@ const DEFAULT_STORY_IMAGE =
 let siteContent = { version: 1, content: {}, images: {}, stories: [] };
 let baseContent = {};
 let baseImages = {};
+let baseImageAlts = {};
 let githubToken = "";
-let currentFileSha = "";
 const dirtyContent = new Set();
 const dirtyImages = new Set();
+const dirtyImageAlts = new Set();
 const pendingStories = new Map();
 const DEFAULT_EXTRA_STORIES = [
   { id: "style-2", category: "STYLE", title: "The outfit formula we reach for on busy mornings", excerpt: "A few dependable pieces make getting ready feel easy, without making your style feel like an afterthought.", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=850&q=85" },
@@ -161,6 +162,8 @@ function loadSavedImages() {
   for (const image of document.querySelectorAll("img[data-image-key]")) {
     const source = siteContent.images[image.dataset.imageKey];
     if (typeof source === "string") image.src = source;
+    const alt = siteContent.imageAlts[image.dataset.imageKey];
+    if (typeof alt === "string") image.alt = alt;
   }
 }
 
@@ -171,6 +174,211 @@ function savePageContent() {
     siteContent.content[key] = value;
     if (value === baseContent[key]) dirtyContent.delete(key);
     else dirtyContent.add(key);
+  }
+}
+
+function normalizeContent(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new TypeError("The published content file must contain a JSON object.");
+  }
+  return {
+    version: 1,
+    content: data.content && typeof data.content === "object" && !Array.isArray(data.content) ? data.content : {},
+    images: data.images && typeof data.images === "object" && !Array.isArray(data.images) ? data.images : {},
+    imageAlts: data.imageAlts && typeof data.imageAlts === "object" && !Array.isArray(data.imageAlts) ? data.imageAlts : {},
+    stories: Array.isArray(data.stories) ? data.stories : [],
+  };
+}
+
+function githubHeaders(token) {
+  return {
+    Accept: "application/vnd.github+json",
+    ["Authorization"]: ["Bearer", token].join(" "),
+    Authorization: `Bearer ${token}`,
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
+function githubErrorMessage(response, details) {
+  if (response.status === 401) return "GitHub rejected the token. Check that it is valid and has access to this repository.";
+  if (response.status === 403) return "GitHub denied access. Grant this token Contents: read and write for this repository.";
+  if (response.status === 409 || response.status === 422) return "The repository changed while saving. Refresh the page and try again.";
+  return details.message || `GitHub request failed (${response.status}).`;
+}
+
+async function readGithubContent(token) {
+  const response = await fetch(`${API_FILE_URL}?ref=${BRANCH}`, {
+    headers: githubHeaders(token),
+    cache: "no-store",
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(githubErrorMessage(response, result));
+  const binary = atob(result.content.replace(/\s/g, ""));
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return { content: normalizeContent(JSON.parse(new TextDecoder().decode(bytes))), sha: result.sha };
+}
+
+function encodeBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
+function renderCurrentContent() {
+  for (const story of siteContent.stories) createStoryCard(story);
+  makePageTextEditable();
+  loadSavedContent();
+  loadSavedImages();
+  document.querySelectorAll("img").forEach(useImageFallback);
+  routePage();
+}
+
+async function loadPublishedContent() {
+  try {
+    const response = await fetch(new URL(CONTENT_FILE, document.baseURI), { cache: "no-store" });
+    if (!response.ok) throw new Error(`Could not load ${CONTENT_FILE} (${response.status}).`);
+    siteContent = normalizeContent(await response.json());
+  } catch (error) {
+    console.error("Could not load published site content.", error);
+    document.querySelector(".github-save-status").textContent =
+      "Could not load the published content file. Built-in stories are shown; check content.json and reload.";
+  }
+  baseContent = { ...siteContent.content };
+  baseImages = { ...siteContent.images };
+  baseImageAlts = { ...siteContent.imageAlts };
+  for (const story of DEFAULT_EXTRA_STORIES) createStoryCard(story);
+  loadSavedStories();
+  initializeImageKeys();
+  renderCurrentContent();
+}
+
+async function connectGithub() {
+  const button = document.querySelector(".github-connect");
+  const status = document.querySelector(".github-save-status");
+  if (githubToken) {
+    githubToken = "";
+    button.textContent = "CONNECT";
+    document.querySelector("#github-token").hidden = false;
+    document.querySelector(".save-changes").disabled = true;
+    document.querySelector(".editor-connection").textContent = "EDIT MODE · LOCAL DRAFT";
+    status.textContent = "Disconnected. Your token has been cleared from this tab.";
+    return;
+  }
+
+  const token = document.querySelector("#github-token").value.trim();
+  if (!token) {
+    status.textContent = "Paste a fine-grained GitHub token to connect.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Connecting to GitHub…";
+  try {
+    const remote = await readGithubContent(token);
+    const draftContent = Object.fromEntries([...dirtyContent].map((key) => [key, siteContent.content[key]]));
+    const draftImages = Object.fromEntries([...dirtyImages].map((key) => [key, siteContent.images[key]]));
+    const draftImageAlts = Object.fromEntries([...dirtyImageAlts].map((key) => [key, siteContent.imageAlts[key]]));
+    const storiesById = new Map(remote.content.stories.map((story) => [String(story.id), story]));
+    for (const story of pendingStories.values()) storiesById.set(String(story.id), story);
+
+    siteContent = remote.content;
+    Object.assign(siteContent.content, draftContent);
+    Object.assign(siteContent.images, draftImages);
+    Object.assign(siteContent.imageAlts, draftImageAlts);
+    siteContent.stories = [...storiesById.values()];
+    baseContent = { ...remote.content.content };
+    baseImages = { ...remote.content.images };
+    baseImageAlts = { ...remote.content.imageAlts };
+    githubToken = token;
+    for (const [key, value] of Object.entries(draftContent)) {
+      if (value !== baseContent[key]) dirtyContent.add(key);
+    }
+    for (const [key, value] of Object.entries(draftImages)) {
+      if (value !== baseImages[key]) dirtyImages.add(key);
+    }
+    for (const [key, value] of Object.entries(draftImageAlts)) {
+      if (value !== baseImageAlts[key]) dirtyImageAlts.add(key);
+    }
+    document.querySelector("#github-token").value = "";
+    document.querySelector("#github-token").hidden = true;
+    button.textContent = "DISCONNECT";
+    document.querySelector(".save-changes").disabled = false;
+    document.querySelector(".editor-connection").textContent = "CONNECTED · GITHUB";
+    status.textContent = "Connected to avazumerchik-design/blog · main.";
+    renderCurrentContent();
+  } catch (error) {
+    console.error("Could not connect to GitHub.", error);
+    status.textContent = error instanceof TypeError
+      ? "Could not reach GitHub. Check your connection and try again."
+      : error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function saveToGithub() {
+  const button = document.querySelector(".save-changes");
+  const status = document.querySelector(".github-save-status");
+  if (!githubToken) {
+    status.textContent = "Connect GitHub before publishing changes.";
+    return;
+  }
+
+  savePageContent();
+  if (!dirtyContent.size && !dirtyImages.size && !dirtyImageAlts.size && !pendingStories.size) {
+    status.textContent = "There are no unsaved changes.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Saving changes to the repository…";
+  try {
+    const remote = await readGithubContent(githubToken);
+    const updatedContent = remote.content;
+    for (const key of dirtyContent) updatedContent.content[key] = siteContent.content[key];
+    for (const key of dirtyImages) updatedContent.images[key] = siteContent.images[key];
+    for (const key of dirtyImageAlts) updatedContent.imageAlts[key] = siteContent.imageAlts[key];
+
+    const storiesById = new Map(updatedContent.stories.map((story) => [String(story.id), story]));
+    for (const [id, story] of pendingStories) storiesById.set(id, story);
+    updatedContent.stories = [...storiesById.values()];
+
+    const response = await fetch(`${API_FILE_URL}?ref=${BRANCH}`, {
+      method: "PUT",
+      headers: { ...githubHeaders(githubToken), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "Update site content from the visual editor",
+        content: encodeBase64(`${JSON.stringify(updatedContent, null, 2)}\n`),
+        sha: remote.sha,
+        branch: BRANCH,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(githubErrorMessage(response, result));
+
+    siteContent = updatedContent;
+    baseContent = { ...updatedContent.content };
+    baseImages = { ...updatedContent.images };
+    baseImageAlts = { ...updatedContent.imageAlts };
+    dirtyContent.clear();
+    dirtyImages.clear();
+    dirtyImageAlts.clear();
+    pendingStories.clear();
+    status.textContent = "Saved to GitHub. GitHub Pages is publishing the update now.";
+    button.textContent = "SAVED";
+    window.setTimeout(() => {
+      button.textContent = "SAVE TO GITHUB";
+    }, 1800);
+  } catch (error) {
+    console.error("Could not save site changes to GitHub.", error);
+    status.textContent = error instanceof TypeError
+      ? "Could not reach GitHub. Your unsaved edits are still in this tab."
+      : `${error.message} Your unsaved edits are still in this tab.`;
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -266,7 +474,7 @@ function openStory(card, storyLink) {
   heading.textContent = title;
   const meta = document.createElement("p");
   meta.className = "article-meta";
-  meta.textContent = "THE EVERYGIRL EDITORS  ·  5 MIN READ";
+  meta.textContent = "THE DAILY EDIT EDITORS  ·  5 MIN READ";
   const articleImage = document.createElement("img");
   articleImage.className = "article-image";
   articleImage.dataset.imageKey = `story-${storyId}-image`;
@@ -347,7 +555,7 @@ function routePage() {
     if (body.classList.contains("is-editing")) makePageTextEditable();
     loadSavedContent();
     filterStories(searchInput.value);
-    document.title = "The Everygirl — A little inspiration for every day";
+    document.title = "The Daily Edit — A little inspiration for every day";
     return;
   }
 
@@ -372,20 +580,10 @@ function routePage() {
   document.body.dataset.page = "category";
   makePageTextEditable();
   loadSavedContent();
-  document.title = `${details.title} — The Everygirl`;
+  document.title = `${details.title} — The Daily Edit`;
   filterStories(searchInput.value);
   window.scrollTo({ top: 0, behavior: "auto" });
 }
-
-const IMAGES_STORAGE_KEY = "everygirl-blog-images";
-for (const story of DEFAULT_EXTRA_STORIES) createStoryCard(story);
-loadSavedStories();
-initializeImageKeys();
-makePageTextEditable();
-loadSavedContent();
-loadSavedImages();
-document.querySelectorAll("img").forEach(useImageFallback);
-routePage();
 
 document.addEventListener("input", (event) => {
   if (event.target.matches("[data-editable]")) {
@@ -393,7 +591,7 @@ document.addEventListener("input", (event) => {
     if (event.target.matches(".category-page h1")) {
       const category = Object.values(CATEGORY_DETAILS).find((item) => item.slug === window.location.hash.split("/")[1]);
       if (category) {
-        document.title = `${event.target.textContent.trim()} — The Everygirl`;
+        document.title = `${event.target.textContent.trim()} — The Daily Edit`;
       }
     }
   }
@@ -403,14 +601,8 @@ editToggle.addEventListener("click", () => {
   setEditing(editToggle.getAttribute("aria-pressed") !== "true");
 });
 
-document.querySelector(".save-changes").addEventListener("click", () => {
-  savePageContent();
-  const button = document.querySelector(".save-changes");
-  button.textContent = "SAVED";
-  window.setTimeout(() => {
-    button.textContent = "SAVE CHANGES";
-  }, 1500);
-});
+document.querySelector(".save-changes").addEventListener("click", saveToGithub);
+document.querySelector(".github-connect").addEventListener("click", connectGithub);
 
 document.querySelector(".add-story").addEventListener("click", () => storyDialog.showModal());
 document.querySelector(".dialog-close").addEventListener("click", () => storyDialog.close());
@@ -466,6 +658,7 @@ document.addEventListener("click", (event) => {
     selectedImage = clickedImage;
     selectedImage.classList.add("image-selected");
     document.querySelector("#image-url").value = selectedImage.src;
+    document.querySelector("#image-alt").value = selectedImage.alt;
     document.querySelector(".image-editor-status").textContent = "Paste an https image URL, then choose Update.";
     document.querySelector("#image-url").focus();
     return;
@@ -552,32 +745,28 @@ document.querySelector(".update-image").addEventListener("click", () => {
   status.textContent = "Checking image…";
   testImage.onload = () => {
     const imageKey = selectedImage.dataset.imageKey;
-    let imageChanges;
-    try {
-      imageChanges = JSON.parse(localStorage.getItem(IMAGES_STORAGE_KEY) || "{}");
-    } catch (error) {
-      console.error("Could not read saved image changes.", error);
-      status.textContent = "Could not update this photo because saved image data is invalid.";
-      return;
-    }
-    imageChanges[imageKey] = parsedUrl.href;
-    try {
-      localStorage.setItem(IMAGES_STORAGE_KEY, JSON.stringify(imageChanges));
-    } catch (error) {
-      console.error("Could not save the image change.", error);
-      status.textContent = "Could not save this photo in browser storage.";
-      return;
-    }
+    siteContent.images[imageKey] = parsedUrl.href;
+    if (parsedUrl.href === baseImages[imageKey]) dirtyImages.delete(imageKey);
+    else dirtyImages.add(imageKey);
+    siteContent.imageAlts[imageKey] = document.querySelector("#image-alt").value.trim();
+    if (siteContent.imageAlts[imageKey] === baseImageAlts[imageKey]) dirtyImageAlts.delete(imageKey);
+    else dirtyImageAlts.add(imageKey);
     document.querySelectorAll("img[data-image-key]").forEach((image) => {
-      if (image.dataset.imageKey === imageKey) image.src = parsedUrl.href;
+      if (image.dataset.imageKey === imageKey) {
+        image.src = parsedUrl.href;
+        image.alt = siteContent.imageAlts[imageKey];
+      }
     });
-    status.textContent = "Photo updated and saved.";
+    status.textContent = "Photo and description updated. Choose Save to publish.";
   };
   testImage.onerror = () => {
     status.textContent = "That image could not be loaded. Check the link and try another.";
   };
   testImage.src = parsedUrl.href;
 });
+
+document.querySelector(".save-changes").disabled = true;
+loadPublishedContent();
 
 document.querySelector(".newsletter-form").addEventListener("submit", (event) => {
   event.preventDefault();
