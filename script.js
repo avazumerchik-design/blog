@@ -99,6 +99,7 @@ const storyForm = document.querySelector(".story-form");
 const searchBar = document.querySelector(".search-bar");
 const searchInput = document.querySelector("#site-search");
 const emptyState = document.querySelector(".empty-state");
+const textDefaults = new Map();
 let selectedImage = null;
 
 function setEditableText(element, text) {
@@ -165,9 +166,11 @@ function setTextSaveStatus(message) {
 
 function loadSavedContent() {
   for (const element of editableElements()) {
-    if (typeof siteContent.content[element.dataset.editable] === "string") {
-      setEditableText(element, siteContent.content[element.dataset.editable]);
+    const key = element.dataset.editable;
+    if (typeof siteContent.content[key] === "string") {
+      setEditableText(element, siteContent.content[key]);
     }
+    if (!Object.hasOwn(siteContent.content, key) && !textDefaults.has(key)) textDefaults.set(key, element.textContent);
   }
 }
 
@@ -194,7 +197,8 @@ function savePageContent() {
     const key = element.dataset.editable;
     const value = element.textContent;
     siteContent.content[key] = value;
-    if (value === baseContent[key]) dirtyContent.delete(key);
+    const baseline = Object.hasOwn(baseContent, key) ? baseContent[key] : textDefaults.get(key);
+    if (value === baseline) dirtyContent.delete(key);
     else dirtyContent.add(key);
   }
   const hasTextChanges = dirtyContent.size > 0 || pendingStories.size > 0;
@@ -497,6 +501,7 @@ function setEditorMode(mode) {
     panel.hidden = panel.dataset.editorPanel !== mode;
   });
   makePageTextEditable();
+  if (mode === "text") savePageContent();
 }
 
 function createStoryCard(story) {
