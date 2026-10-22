@@ -228,7 +228,7 @@
 
     <aside class="editor-toolbar" aria-label="Site editor" hidden>
       <div class="editor-status"><span class="editor-dot"></span><span class="editor-connection">EDIT MODE · LOCAL DRAFT</span></div>
-      <p>Click text to edit. Open an article with its photo or Read the story link; category tabs stay clickable. Save text and photo changes to GitHub.</p>
+      <p>Choose a separate editor for writing or photos. Connect once to publish either kind of change.</p>
       <label class="github-token-label" for="github-token">GitHub fine-grained token</label>
       <p class="github-token-help">Create a token limited to this repository with Contents: read and write. It stays in this tab only. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">Create a token</a></p>
       <div class="github-connect-row">
@@ -236,18 +236,31 @@
         <button class="github-connect" type="button">CONNECT</button>
       </div>
       <p class="github-save-status" aria-live="polite">Connect GitHub before publishing changes.</p>
-      <label class="image-editor-label" for="image-url">Selected photo URL</label>
-      <div class="image-editor-row">
-        <input id="image-url" type="url" placeholder="Click a photo, then paste an https image URL" />
-        <button class="update-image" type="button">UPDATE</button>
+      <div class="editor-mode-tabs" role="tablist" aria-label="Choose an editor">
+        <button class="editor-mode-tab" type="button" role="tab" id="text-mode-tab" aria-selected="true" aria-controls="text-editor-panel" data-editor-mode="text">EDIT TEXT</button>
+        <button class="editor-mode-tab" type="button" role="tab" id="photo-mode-tab" aria-selected="false" aria-controls="photo-editor-panel" data-editor-mode="photos">EDIT PHOTOS</button>
       </div>
-      <label class="image-editor-label" for="image-alt">Photo description</label>
-      <input class="image-alt-input" id="image-alt" type="text" maxlength="250" placeholder="Describe this photo for accessibility" />
-      <p class="image-editor-status" aria-live="polite">Choose any photo on the page to replace it.</p>
-      <div class="editor-actions">
-        <button class="add-story" type="button">＋ ADD STORY</button>
-        <button class="save-changes" type="button" disabled>SAVE TO GITHUB</button>
-      </div>
+      <section class="editor-mode-panel" id="text-editor-panel" role="tabpanel" aria-labelledby="text-mode-tab" data-editor-panel="text">
+        <p>Click words to edit. Open an article with its photo or Read the story link; use the category tabs to edit category pages.</p>
+        <div class="editor-actions">
+          <button class="add-story" type="button">＋ ADD STORY</button>
+          <button class="save-text-changes" type="button" disabled>SAVE TEXT TO GITHUB</button>
+        </div>
+        <p class="text-save-status" aria-live="polite">Text changes will be saved to content.json.</p>
+      </section>
+      <section class="editor-mode-panel" id="photo-editor-panel" role="tabpanel" aria-labelledby="photo-mode-tab" data-editor-panel="photos" hidden>
+        <p>Click a photo on the page to select it, then update its URL or description.</p>
+        <label class="image-editor-label" for="image-url">Selected photo URL</label>
+        <div class="image-editor-row">
+          <input id="image-url" type="url" placeholder="Click a photo, then paste an https image URL" />
+          <button class="update-image" type="button">UPDATE</button>
+        </div>
+        <label class="image-editor-label" for="image-alt">Photo description</label>
+        <input class="image-alt-input" id="image-alt" type="text" maxlength="250" placeholder="Describe this photo for accessibility" />
+        <p class="image-editor-status" aria-live="polite">Choose any photo on the page to replace it.</p>
+        <button class="save-photo-changes" type="button" disabled>SAVE PHOTOS TO GITHUB</button>
+        <p class="photo-save-status" aria-live="polite">Photo edits are saved separately from text.</p>
+      </section>
     </aside>
 
     <dialog class="story-dialog">
@@ -278,6 +291,10 @@
     <dialog class="article-dialog" aria-labelledby="article-title">
       <button class="article-close" type="button" aria-label="Close story">×</button>
       <article class="article-view"></article>
+      <div class="article-editor-actions" hidden>
+        <button class="save-article-text" type="button" disabled>SAVE TEXT TO GITHUB</button>
+        <p class="article-save-status" aria-live="polite">Connect GitHub before saving text changes.</p>
+      </div>
     </dialog>
   </body>
 </html>

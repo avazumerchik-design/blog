@@ -118,6 +118,7 @@ function elementIsVisible(element) {
 
 function makePageTextEditable() {
   const textElements = document.querySelectorAll("p, h1, h2, h3, a, button, label, span, small, strong");
+  const canEditText = body.classList.contains("is-editing") && body.dataset.editorMode === "text";
   for (const element of textElements) {
     if (element.matches("a[data-open-story].story-read, a[data-open-story].text-link")) {
       element.removeAttribute("data-editable");
@@ -144,9 +145,22 @@ function makePageTextEditable() {
       }
       element.dataset.editable = `page-${path.join("-")}`;
     }
-    element.contentEditable = String(body.classList.contains("is-editing") && elementIsVisible(element));
-    element.spellcheck = body.classList.contains("is-editing");
+    element.contentEditable = String(canEditText && elementIsVisible(element));
+    element.spellcheck = canEditText;
   }
+  document.querySelector(".article-editor-actions").hidden = !canEditText;
+}
+
+function setTextSaveButtonLabel(label) {
+  document.querySelectorAll(".save-text-changes, .save-article-text").forEach((button) => {
+    button.textContent = label;
+  });
+}
+
+function setTextSaveStatus(message) {
+  document.querySelectorAll(".text-save-status, .article-save-status").forEach((status) => {
+    status.textContent = message;
+  });
 }
 
 function loadSavedContent() {
@@ -176,16 +190,18 @@ function loadSavedImages() {
 }
 
 function savePageContent() {
-  for (const element of editableElements().filter(elementIsVisible)) {
+  for (const element of editableElements().filter((item) => item.contentEditable === "true" && elementIsVisible(item))) {
     const key = element.dataset.editable;
     const value = element.textContent;
     siteContent.content[key] = value;
     if (value === baseContent[key]) dirtyContent.delete(key);
-    else {
-      dirtyContent.add(key);
-      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
-    }
+    else dirtyContent.add(key);
   }
+  const hasTextChanges = dirtyContent.size > 0 || pendingStories.size > 0;
+  if (hasTextChanges) setTextSaveButtonLabel("SAVE TEXT TO GITHUB");
+  setTextSaveStatus(hasTextChanges
+    ? "Text changes are ready to save to GitHub."
+    : "No unsaved text changes.");
 }
 
 function normalizeContent(data) {
@@ -294,7 +310,7 @@ async function connectGithub() {
     githubToken = "";
     button.textContent = "CONNECT";
     document.querySelector("#github-token").hidden = false;
-    document.querySelector(".save-changes").disabled = true;
+    setSaveButtonsBusy(false);
     document.querySelector(".editor-connection").textContent = "EDIT MODE · LOCAL DRAFT";
     status.textContent = "Disconnected. Your token has been cleared from this tab.";
     return;
@@ -338,7 +354,7 @@ async function connectGithub() {
     document.querySelector("#github-token").value = "";
     document.querySelector("#github-token").hidden = true;
     button.textContent = "DISCONNECT";
-    document.querySelector(".save-changes").disabled = false;
+    setSaveButtonsBusy(false);
     document.querySelector(".editor-connection").textContent = "CONNECTED · GITHUB";
     status.textContent = "Connected to avazumerchik-design/blog · main.";
     renderCurrentContent();
@@ -353,74 +369,134 @@ async function connectGithub() {
   }
 }
 
-async function saveToGithub() {
-  const button = document.querySelector(".save-changes");
-  const status = document.querySelector(".github-save-status");
+async function writeContentToGithub(updatedContent, remoteSha) {
+  const response = await fetch(`${API_FILE_URL}?ref=${BRANCH}`, {
+    method: "PUT",
+    headers: { ...githubHeaders(githubToken), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: "Update site content from the visual editor",
+      content: encodeBase64(`${JSON.stringify(updatedContent, null, 2)}\n`),
+      ...(remoteSha ? { sha: remoteSha } : {}),
+      branch: BRANCH,
+    }),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(githubErrorMessage(response, result));
+}
+
+function setSaveButtonsBusy(isBusy) {
+  document.querySelectorAll(".save-text-changes, .save-article-text, .save-photo-changes").forEach((button) => {
+    button.disabled = isBusy || !githubToken;
+  });
+}
+
+async function saveTextToGithub() {
   if (!githubToken) {
-    status.textContent = "Connect GitHub before publishing changes.";
+    setTextSaveStatus("Connect GitHub before saving text changes.");
     return;
   }
 
   savePageContent();
-  if (!dirtyContent.size && !dirtyImages.size && !dirtyImageAlts.size && !pendingStories.size) {
-    status.textContent = "There are no unsaved changes.";
+  if (!dirtyContent.size && !pendingStories.size) {
+    setTextSaveStatus("There are no unsaved text changes.");
     return;
   }
 
-  button.disabled = true;
-  status.textContent = "Saving changes to the repository…";
+  setSaveButtonsBusy(true);
+  setTextSaveButtonLabel("SAVING TEXT…");
+  setTextSaveStatus("Saving text changes to GitHub…");
   try {
     const remote = await readGithubContent(githubToken);
     const updatedContent = remote.content;
     for (const key of dirtyContent) updatedContent.content[key] = siteContent.content[key];
-    for (const key of dirtyImages) updatedContent.images[key] = siteContent.images[key];
-    for (const key of dirtyImageAlts) updatedContent.imageAlts[key] = siteContent.imageAlts[key];
 
     const storiesById = new Map(updatedContent.stories.map((story) => [String(story.id), story]));
     for (const [id, story] of pendingStories) storiesById.set(id, story);
     updatedContent.stories = [...storiesById.values()];
 
-    const response = await fetch(`${API_FILE_URL}?ref=${BRANCH}`, {
-      method: "PUT",
-      headers: { ...githubHeaders(githubToken), "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: "Update site content from the visual editor",
-        content: encodeBase64(`${JSON.stringify(updatedContent, null, 2)}\n`),
-        ...(remote.sha ? { sha: remote.sha } : {}),
-        branch: BRANCH,
-      }),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(githubErrorMessage(response, result));
-
-    siteContent = updatedContent;
+    await writeContentToGithub(updatedContent, remote.sha);
+    siteContent.content = { ...updatedContent.content };
+    siteContent.stories = updatedContent.stories;
     baseContent = { ...updatedContent.content };
+    dirtyContent.clear();
+    pendingStories.clear();
+    setTextSaveStatus("Text saved to GitHub. GitHub Pages is publishing the update now.");
+    setTextSaveButtonLabel("TEXT SAVED");
+  } catch (error) {
+    console.error("Could not save text changes to GitHub.", error);
+    setTextSaveButtonLabel("SAVE TEXT TO GITHUB");
+    setTextSaveStatus(error instanceof TypeError
+      ? "Could not reach GitHub. Your text edits are still in this tab."
+      : `${error.message} Your text edits are still in this tab.`);
+  } finally {
+    setSaveButtonsBusy(false);
+  }
+}
+
+async function savePhotosToGithub() {
+  const button = document.querySelector(".save-photo-changes");
+  const status = document.querySelector(".photo-save-status");
+  if (!githubToken) {
+    status.textContent = "Connect GitHub before saving photo changes.";
+    return;
+  }
+
+  if (!dirtyImages.size && !dirtyImageAlts.size) {
+    status.textContent = "There are no unsaved photo changes.";
+    return;
+  }
+
+  setSaveButtonsBusy(true);
+  button.textContent = "SAVING PHOTOS…";
+  status.textContent = "Saving photo changes to GitHub…";
+  try {
+    const remote = await readGithubContent(githubToken);
+    const updatedContent = remote.content;
+    for (const key of dirtyImages) updatedContent.images[key] = siteContent.images[key];
+    for (const key of dirtyImageAlts) updatedContent.imageAlts[key] = siteContent.imageAlts[key];
+
+    await writeContentToGithub(updatedContent, remote.sha);
+    siteContent.images = { ...updatedContent.images };
+    siteContent.imageAlts = { ...updatedContent.imageAlts };
     baseImages = { ...updatedContent.images };
     baseImageAlts = { ...updatedContent.imageAlts };
-    dirtyContent.clear();
     dirtyImages.clear();
     dirtyImageAlts.clear();
-    pendingStories.clear();
-    status.textContent = "Saved to GitHub. GitHub Pages is publishing the update now.";
-    button.textContent = "SAVED";
+    status.textContent = "Photos saved to GitHub. GitHub Pages is publishing the update now.";
+    button.textContent = "PHOTOS SAVED";
   } catch (error) {
-    console.error("Could not save site changes to GitHub.", error);
-    button.textContent = "SAVE TO GITHUB";
+    console.error("Could not save photo changes to GitHub.", error);
+    button.textContent = "SAVE PHOTOS TO GITHUB";
     status.textContent = error instanceof TypeError
-      ? "Could not reach GitHub. Your unsaved edits are still in this tab."
-      : `${error.message} Your unsaved edits are still in this tab.`;
+      ? "Could not reach GitHub. Your photo edits are still in this tab."
+      : `${error.message} Your photo edits are still in this tab.`;
   } finally {
-    button.disabled = false;
+    setSaveButtonsBusy(false);
   }
 }
 
 function setEditing(isEditing) {
+  if (!isEditing) savePageContent();
   body.classList.toggle("is-editing", isEditing);
   editToggle.setAttribute("aria-pressed", String(isEditing));
   editorToolbar.hidden = !isEditing;
+  if (isEditing) setEditorMode(body.dataset.editorMode || "text");
+  if (!isEditing) delete body.dataset.editorMode;
   makePageTextEditable();
+}
 
-  if (!isEditing) savePageContent();
+function setEditorMode(mode) {
+  if (body.dataset.editorMode === "text") savePageContent();
+  body.dataset.editorMode = mode;
+  document.querySelectorAll(".editor-mode-tab[data-editor-mode]").forEach((tab) => {
+    const selected = tab.dataset.editorMode === mode;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelectorAll("[data-editor-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.editorPanel !== mode;
+  });
+  makePageTextEditable();
 }
 
 function createStoryCard(story) {
@@ -546,7 +622,8 @@ function loadSavedStories() {
 function saveNewStory(story) {
   siteContent.stories.push(story);
   pendingStories.set(String(story.id), story);
-  document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+  setTextSaveButtonLabel("SAVE TEXT TO GITHUB");
+  setTextSaveStatus("New story is ready to save to GitHub.");
 }
 
 function filterStories(query = "") {
@@ -622,7 +699,7 @@ function routePage() {
 }
 
 document.addEventListener("input", (event) => {
-  if (event.target.matches("[data-editable]")) {
+  if (event.target.matches("[data-editable]") && event.target.contentEditable === "true") {
     savePageContent();
     if (event.target.matches(".category-page h1")) {
       const category = Object.values(CATEGORY_DETAILS).find((item) => item.slug === window.location.hash.split("/")[1]);
@@ -637,7 +714,13 @@ editToggle.addEventListener("click", () => {
   setEditing(editToggle.getAttribute("aria-pressed") !== "true");
 });
 
-document.querySelector(".save-changes").addEventListener("click", saveToGithub);
+document.querySelectorAll("[data-editor-mode]").forEach((tab) => {
+  tab.addEventListener("click", () => setEditorMode(tab.dataset.editorMode));
+});
+
+document.querySelector(".save-text-changes").addEventListener("click", saveTextToGithub);
+document.querySelector(".save-article-text").addEventListener("click", saveTextToGithub);
+document.querySelector(".save-photo-changes").addEventListener("click", savePhotosToGithub);
 document.querySelector(".github-connect").addEventListener("click", connectGithub);
 
 document.querySelector(".add-story").addEventListener("click", () => storyDialog.showModal());
@@ -687,7 +770,7 @@ storyForm.addEventListener("submit", (event) => {
 
 document.addEventListener("click", (event) => {
   const clickedImage = event.target.closest("img[data-image-key]");
-  if (clickedImage && body.classList.contains("is-editing")) {
+  if (clickedImage && body.classList.contains("is-editing") && body.dataset.editorMode === "photos") {
     event.preventDefault();
     event.stopPropagation();
     selectedImage?.classList.remove("image-selected");
@@ -786,13 +869,13 @@ document.querySelector(".update-image").addEventListener("click", () => {
     if (parsedUrl.href === baseImages[imageKey]) dirtyImages.delete(imageKey);
     else {
       dirtyImages.add(imageKey);
-      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+      document.querySelector(".save-photo-changes").textContent = "SAVE PHOTOS TO GITHUB";
     }
     siteContent.imageAlts[imageKey] = document.querySelector("#image-alt").value.trim();
     if (siteContent.imageAlts[imageKey] === baseImageAlts[imageKey]) dirtyImageAlts.delete(imageKey);
     else {
       dirtyImageAlts.add(imageKey);
-      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+      document.querySelector(".save-photo-changes").textContent = "SAVE PHOTOS TO GITHUB";
     }
     document.querySelectorAll("img[data-image-key]").forEach((image) => {
       if (image.dataset.imageKey === imageKey) {
@@ -800,7 +883,8 @@ document.querySelector(".update-image").addEventListener("click", () => {
         image.alt = siteContent.imageAlts[imageKey];
       }
     });
-    status.textContent = "Photo and description updated. Choose Save to publish.";
+    status.textContent = "Photo and description updated.";
+    document.querySelector(".photo-save-status").textContent = "Photo changes are ready to save separately.";
   };
   testImage.onerror = () => {
     status.textContent = "That image could not be loaded. Check the link and try another.";
@@ -808,7 +892,7 @@ document.querySelector(".update-image").addEventListener("click", () => {
   testImage.src = parsedUrl.href;
 });
 
-document.querySelector(".save-changes").disabled = true;
+setSaveButtonsBusy(false);
 loadPublishedContent();
 
 document.querySelector(".newsletter-form").addEventListener("submit", (event) => {

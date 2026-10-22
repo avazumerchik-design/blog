@@ -1076,6 +1076,34 @@ h2 em {
   line-height: 1.5;
 }
 
+.editor-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.editor-mode-tab {
+  min-height: 34px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: white;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.editor-mode-tab[aria-selected="true"] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+
+.editor-mode-panel[hidden] {
+  display: none;
+}
+
 .editor-actions {
   display: flex;
   gap: 8px;
@@ -1093,9 +1121,35 @@ h2 em {
   cursor: pointer;
 }
 
-.editor-actions .save-changes {
+.editor-actions .save-text-changes,
+.save-photo-changes {
+  min-height: 35px;
+  padding: 0 8px;
+  border: 1px solid var(--ink);
   background: var(--ink);
   color: white;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.editor-actions .save-text-changes {
+  flex: 1;
+}
+
+.editor-actions .save-text-changes:disabled,
+.save-photo-changes:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.text-save-status,
+.photo-save-status {
+  min-height: 14px;
+  margin: 8px 0 0 !important;
+  font-size: 9px !important;
+  line-height: 1.5;
 }
 
 .image-editor-row {
@@ -1118,6 +1172,11 @@ h2 em {
 
 .image-editor-row button {
   padding: 0 10px;
+}
+
+.save-photo-changes {
+  width: 100%;
+  margin-top: 8px;
   border: 1px solid var(--ink);
   background: var(--ink);
   color: white;
@@ -1198,6 +1257,46 @@ body.is-editing [data-editable]:focus {
 
 .article-view {
   padding: 60px clamp(24px, 8vw, 84px) 70px;
+}
+
+.article-editor-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(24px, 8vw, 84px);
+  border-top: 1px solid var(--line);
+  background: white;
+}
+
+.article-editor-actions[hidden] {
+  display: none;
+}
+
+.article-editor-actions .save-article-text {
+  min-height: 35px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.article-editor-actions .save-article-text:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.article-save-status {
+  margin: 0 !important;
+  color: var(--muted);
+  font-size: 9px !important;
+  line-height: 1.5;
 }
 
 .article-view > .eyebrow {
