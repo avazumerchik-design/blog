@@ -1,7 +1,17 @@
-const CONTENT_STORAGE_KEY = "everygirl-blog-content";
-const STORIES_STORAGE_KEY = "everygirl-blog-stories";
+const REPOSITORY = "avazumerchik-design/blog";
+const BRANCH = "main";
+const CONTENT_FILE = "content.json";
+const API_FILE_URL = `https://api.github.com/repos/${REPOSITORY}/contents/${CONTENT_FILE}`;
 const DEFAULT_STORY_IMAGE =
   "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=850&q=85";
+let siteContent = { version: 1, content: {}, images: {}, stories: [] };
+let baseContent = {};
+let baseImages = {};
+let githubToken = "";
+let currentFileSha = "";
+const dirtyContent = new Set();
+const dirtyImages = new Set();
+const pendingStories = new Map();
 const DEFAULT_EXTRA_STORIES = [
   { id: "style-2", category: "STYLE", title: "The outfit formula we reach for on busy mornings", excerpt: "A few dependable pieces make getting ready feel easy, without making your style feel like an afterthought.", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=850&q=85" },
   { id: "style-3", category: "STYLE", title: "The little accessories that make an outfit yours", excerpt: "Personal style is often in the details: the everyday pieces you reach for and love wearing again.", image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=850&q=85" },
@@ -131,18 +141,10 @@ function makePageTextEditable() {
 }
 
 function loadSavedContent() {
-  const savedContent = localStorage.getItem(CONTENT_STORAGE_KEY);
-  if (!savedContent) return;
-
-  try {
-    const content = JSON.parse(savedContent);
-    for (const element of editableElements()) {
-      if (typeof content[element.dataset.editable] === "string") {
-        setEditableText(element, content[element.dataset.editable]);
-      }
+  for (const element of editableElements()) {
+    if (typeof siteContent.content[element.dataset.editable] === "string") {
+      setEditableText(element, siteContent.content[element.dataset.editable]);
     }
-  } catch (error) {
-    console.error("Could not load saved page content.", error);
   }
 }
 
@@ -156,30 +158,19 @@ function initializeImageKeys() {
 }
 
 function loadSavedImages() {
-  const savedImages = localStorage.getItem(IMAGES_STORAGE_KEY);
-  if (!savedImages) return;
-  try {
-    const images = JSON.parse(savedImages);
-    for (const image of document.querySelectorAll("img[data-image-key]")) {
-      const source = images[image.dataset.imageKey];
-      if (typeof source === "string" && new URL(source).protocol === "https:") image.src = source;
-    }
-  } catch (error) {
-    console.error("Could not load saved image changes.", error);
+  for (const image of document.querySelectorAll("img[data-image-key]")) {
+    const source = siteContent.images[image.dataset.imageKey];
+    if (typeof source === "string") image.src = source;
   }
 }
 
 function savePageContent() {
-  const content = Object.fromEntries(
-    editableElements()
-      .filter(elementIsVisible)
-      .map((element) => [element.dataset.editable, element.textContent]),
-  );
-  try {
-    localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(content));
-  } catch (error) {
-    console.error("Could not save text edits.", error);
-    document.querySelector(".editor-status span:last-child").textContent = "SAVE FAILED";
+  for (const element of editableElements().filter(elementIsVisible)) {
+    const key = element.dataset.editable;
+    const value = element.textContent;
+    siteContent.content[key] = value;
+    if (value === baseContent[key]) dirtyContent.delete(key);
+    else dirtyContent.add(key);
   }
 }
 
@@ -193,9 +184,13 @@ function setEditing(isEditing) {
 }
 
 function createStoryCard(story) {
+  if ([...storyGrid.querySelectorAll("[data-story-card]")].some((card) => card.dataset.storyId === String(story.id))) {
+    return;
+  }
   const article = document.createElement("article");
   article.className = "story-card";
   article.dataset.storyCard = "";
+  article.dataset.storyId = String(story.id);
   article.dataset.category = story.category;
 
   const imageLink = document.createElement("a");
@@ -257,18 +252,9 @@ function openStory(card, storyLink) {
     : card?.querySelector(".story-excerpt")?.textContent.trim();
   const image = isLeadStory ? storyLink.closest(".lead-story").querySelector(".lead-image img") : card?.querySelector(".story-image img");
   if (!title || !image) return;
-  const savedStories = localStorage.getItem(STORIES_STORAGE_KEY);
   let storyBody = FEATURED_STORY_BODIES[isLeadStory ? "story-lead" : `story-${storyId}`];
-
-  if (savedStories) {
-    try {
-      const stories = JSON.parse(savedStories);
-      const savedStory = stories.find((story) => String(story.id) === storyId);
-      if (savedStory?.body) storyBody = savedStory.body.split(/\n{2,}/).filter(Boolean);
-    } catch (error) {
-      console.error("Could not load the story text.", error);
-    }
-  }
+  const savedStory = siteContent.stories.find((story) => String(story.id) === storyId);
+  if (savedStory?.body) storyBody = savedStory.body.split(/\n{2,}/).filter(Boolean);
 
   const articleView = document.querySelector(".article-view");
   articleView.replaceChildren();
@@ -311,33 +297,12 @@ function openStory(card, storyLink) {
 }
 
 function loadSavedStories() {
-  const savedStories = localStorage.getItem(STORIES_STORAGE_KEY);
-  if (!savedStories) return;
-
-  try {
-    const stories = JSON.parse(savedStories);
-    if (!Array.isArray(stories)) throw new TypeError("Saved stories must be a list.");
-    for (const story of stories) createStoryCard(story);
-  } catch (error) {
-    console.error("Could not load saved stories.", error);
-  }
+  for (const story of siteContent.stories) createStoryCard(story);
 }
 
 function saveNewStory(story) {
-  let stories = [];
-  const savedStories = localStorage.getItem(STORIES_STORAGE_KEY);
-  if (savedStories) {
-    try {
-      stories = JSON.parse(savedStories);
-      if (!Array.isArray(stories)) throw new TypeError("Saved stories must be a list.");
-    } catch (error) {
-      console.error("Could not update saved stories.", error);
-      throw error;
-    }
-  }
-
-  stories.push(story);
-  localStorage.setItem(STORIES_STORAGE_KEY, JSON.stringify(stories));
+  siteContent.stories.push(story);
+  pendingStories.set(String(story.id), story);
 }
 
 function filterStories(query = "") {
