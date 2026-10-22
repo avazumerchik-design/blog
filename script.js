@@ -119,7 +119,13 @@ function elementIsVisible(element) {
 function makePageTextEditable() {
   const textElements = document.querySelectorAll("p, h1, h2, h3, a, button, label, span, small, strong");
   for (const element of textElements) {
-    if (element.closest(".editor-toolbar, .story-dialog, .article-close, svg, [aria-hidden='true'], [hidden]")) continue;
+    if (element.matches("a[data-open-story].story-read, a[data-open-story].text-link")) {
+      element.removeAttribute("data-editable");
+      element.removeAttribute("contenteditable");
+      continue;
+    }
+    if (element.matches(".article-meta")
+      || element.closest(".editor-toolbar, .story-dialog, .article-close, svg, [aria-hidden='true'], [hidden]")) continue;
     if (![...element.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
     if (!element.dataset.editable) {
       const path = [];
@@ -494,9 +500,11 @@ function openStory(card, storyLink) {
   articleView.replaceChildren();
   const categoryLabel = document.createElement("p");
   categoryLabel.className = "eyebrow";
+  categoryLabel.dataset.editable = isLeadStory ? "lead-category" : `story-${storyId}-category`;
   categoryLabel.textContent = category;
   const heading = document.createElement("h1");
   heading.id = "article-title";
+  heading.dataset.editable = isLeadStory ? "lead-title" : `story-${storyId}-title`;
   heading.textContent = title;
   const meta = document.createElement("p");
   meta.className = "article-meta";
@@ -510,6 +518,7 @@ function openStory(card, storyLink) {
   loadSavedImages();
   const lead = document.createElement("p");
   lead.className = "article-lead";
+  lead.dataset.editable = isLeadStory ? "lead-excerpt" : `story-${storyId}-excerpt`;
   lead.textContent = excerpt;
 
   articleView.append(categoryLabel, heading, meta, articleImage, lead);
@@ -521,13 +530,13 @@ function openStory(card, storyLink) {
   for (const [index, paragraphText] of completeStory.entries()) {
     const paragraph = document.createElement("p");
     paragraph.className = "article-paragraph";
-    paragraph.dataset.editable = `article-${storyId}-${index}`;
+    paragraph.dataset.editable = `article-${isLeadStory ? "lead" : storyId}-${index}`;
     paragraph.textContent = paragraphText;
     articleView.append(paragraph);
   }
+  document.querySelector(".article-dialog").showModal();
   if (body.classList.contains("is-editing")) makePageTextEditable();
   loadSavedContent();
-  document.querySelector(".article-dialog").showModal();
 }
 
 function loadSavedStories() {
@@ -718,6 +727,11 @@ document.querySelector(".article-close").addEventListener("click", () => {
   document.querySelector(".article-dialog").close();
 });
 
+document.querySelector(".article-dialog").addEventListener("close", () => {
+  if (body.classList.contains("is-editing")) makePageTextEditable();
+  loadSavedContent();
+});
+
 const searchToggle = document.querySelector(".search-toggle");
 searchToggle.addEventListener("click", () => {
   const opening = searchBar.hidden;
@@ -737,10 +751,6 @@ searchInput.addEventListener("input", () => filterStories(searchInput.value));
 
 document.querySelectorAll("[data-category-link]").forEach((link) => {
   link.addEventListener("click", (event) => {
-    if (body.classList.contains("is-editing")) {
-      event.preventDefault();
-      return;
-    }
     if (link.dataset.categoryLink === "all") return;
     event.preventDefault();
     window.location.hash = `category/${CATEGORY_DETAILS[link.dataset.categoryLink].slug}`;
