@@ -2,6 +2,8 @@ const REPOSITORY = "avazumerchik-design/blog";
 const BRANCH = "main";
 const CONTENT_FILE = "content.json";
 const API_FILE_URL = `https://api.github.com/repos/${REPOSITORY}/contents/${CONTENT_FILE}`;
+const API_REPOSITORY_URL = `https://api.github.com/repos/${REPOSITORY}`;
+const API_CONTENTS_URL = `https://api.github.com/repos/${REPOSITORY}/contents`;
 const DEFAULT_STORY_IMAGE =
   "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=850&q=85";
 let siteContent = { version: 1, content: {}, images: {}, stories: [] };
@@ -173,7 +175,10 @@ function savePageContent() {
     const value = element.textContent;
     siteContent.content[key] = value;
     if (value === baseContent[key]) dirtyContent.delete(key);
-    else dirtyContent.add(key);
+    else {
+      dirtyContent.add(key);
+      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+    }
   }
 }
 
@@ -202,6 +207,7 @@ function githubHeaders(token) {
 function githubErrorMessage(response, details) {
   if (response.status === 401) return "GitHub rejected the token. Check that it is valid and has access to this repository.";
   if (response.status === 403) return "GitHub denied access. Grant this token Contents: read and write for this repository.";
+  if (response.status === 404) return "GitHub could not find this repository. Check the repository owner and that the token is authorized for it.";
   if (response.status === 409 || response.status === 422) return "The repository changed while saving. Refresh the page and try again.";
   return details.message || `GitHub request failed (${response.status}).`;
 }
@@ -212,6 +218,27 @@ async function readGithubContent(token) {
     cache: "no-store",
   });
   const result = await response.json();
+  if (response.status === 404) {
+    const repositoryResponse = await fetch(API_REPOSITORY_URL, {
+      headers: githubHeaders(token),
+      cache: "no-store",
+    });
+    const repositoryResult = await repositoryResponse.json();
+    if (!repositoryResponse.ok) {
+      throw new Error(githubErrorMessage(repositoryResponse, repositoryResult));
+    }
+    const contentsResponse = await fetch(`${API_CONTENTS_URL}?ref=${BRANCH}`, {
+      headers: githubHeaders(token),
+      cache: "no-store",
+    });
+    const contentsResult = await contentsResponse.json();
+    if (!contentsResponse.ok) {
+      throw new Error(contentsResponse.status === 403 || contentsResponse.status === 404
+        ? "GitHub can access the repository, but not its contents. Grant this token Contents: read and write."
+        : githubErrorMessage(contentsResponse, contentsResult));
+    }
+    return { content: normalizeContent({}), sha: null };
+  }
   if (!response.ok) throw new Error(githubErrorMessage(response, result));
   const binary = atob(result.content.replace(/\s/g, ""));
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
@@ -352,7 +379,7 @@ async function saveToGithub() {
       body: JSON.stringify({
         message: "Update site content from the visual editor",
         content: encodeBase64(`${JSON.stringify(updatedContent, null, 2)}\n`),
-        sha: remote.sha,
+        ...(remote.sha ? { sha: remote.sha } : {}),
         branch: BRANCH,
       }),
     });
@@ -369,11 +396,9 @@ async function saveToGithub() {
     pendingStories.clear();
     status.textContent = "Saved to GitHub. GitHub Pages is publishing the update now.";
     button.textContent = "SAVED";
-    window.setTimeout(() => {
-      button.textContent = "SAVE TO GITHUB";
-    }, 1800);
   } catch (error) {
     console.error("Could not save site changes to GitHub.", error);
+    button.textContent = "SAVE TO GITHUB";
     status.textContent = error instanceof TypeError
       ? "Could not reach GitHub. Your unsaved edits are still in this tab."
       : `${error.message} Your unsaved edits are still in this tab.`;
@@ -511,6 +536,7 @@ function loadSavedStories() {
 function saveNewStory(story) {
   siteContent.stories.push(story);
   pendingStories.set(String(story.id), story);
+  document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
 }
 
 function filterStories(query = "") {
@@ -747,10 +773,16 @@ document.querySelector(".update-image").addEventListener("click", () => {
     const imageKey = selectedImage.dataset.imageKey;
     siteContent.images[imageKey] = parsedUrl.href;
     if (parsedUrl.href === baseImages[imageKey]) dirtyImages.delete(imageKey);
-    else dirtyImages.add(imageKey);
+    else {
+      dirtyImages.add(imageKey);
+      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+    }
     siteContent.imageAlts[imageKey] = document.querySelector("#image-alt").value.trim();
     if (siteContent.imageAlts[imageKey] === baseImageAlts[imageKey]) dirtyImageAlts.delete(imageKey);
-    else dirtyImageAlts.add(imageKey);
+    else {
+      dirtyImageAlts.add(imageKey);
+      document.querySelector(".save-changes").textContent = "SAVE TO GITHUB";
+    }
     document.querySelectorAll("img[data-image-key]").forEach((image) => {
       if (image.dataset.imageKey === imageKey) {
         image.src = parsedUrl.href;
