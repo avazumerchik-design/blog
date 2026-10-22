@@ -104,7 +104,7 @@ function elementIsVisible(element) {
 }
 
 function makePageTextEditable() {
-  const textElements = document.querySelectorAll("p, h1, h2, h3, a, button, label, span, small, strong, em");
+  const textElements = document.querySelectorAll("p, h1, h2, h3, a, button, label, span, small, strong");
   for (const element of textElements) {
     if (element.closest(".editor-toolbar, .story-dialog, .article-close, svg, [aria-hidden='true'], [hidden]")) continue;
     if (![...element.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
@@ -383,7 +383,6 @@ function routePage() {
     loadSavedContent();
     filterStories(searchInput.value);
     document.title = "The Everygirl — A little inspiration for every day";
-    if (window.location.hash === "#home") window.scrollTo({ top: 0, behavior: "auto" });
     return;
   }
 
@@ -564,11 +563,6 @@ document.querySelectorAll("[data-category-link]").forEach((link) => {
 });
 
 window.addEventListener("hashchange", routePage);
-window.addEventListener("load", () => {
-  if (window.location.hash === "#home") {
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
-  }
-});
 
 document.querySelector(".update-image").addEventListener("click", () => {
   const status = document.querySelector(".image-editor-status");
@@ -589,10 +583,10 @@ document.querySelector(".update-image").addEventListener("click", () => {
     return;
   }
 
-  const imageKey = selectedImage.dataset.imageKey;
   const testImage = new Image();
   status.textContent = "Checking image…";
   testImage.onload = () => {
+    const imageKey = selectedImage.dataset.imageKey;
     let imageChanges;
     try {
       imageChanges = JSON.parse(localStorage.getItem(IMAGES_STORAGE_KEY) || "{}");

@@ -7,7 +7,7 @@
       name="description"
       content="Fresh ideas for a life you love. Stories on style, wellness, career, home, and everything in between."
     />
-    <title>The Everygirl — A little inspiration for every day</title>
+    <title>The Daily Edit — A little inspiration for every day</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -31,7 +31,7 @@
             <path d="m16 16 5 5"></path>
           </svg>
         </button>
-        <a class="wordmark" href="#home" aria-label="The Everygirl home" data-editable="site-name">the everygirl</a>
+        <a class="wordmark" href="#home" aria-label="The Daily Edit home" data-editable="site-name">the daily edit</a>
         <div class="header-actions">
           <a class="about-link" href="#about">ABOUT US</a>
           <button class="edit-toggle" type="button" aria-pressed="false">
@@ -92,8 +92,8 @@
 
       <div class="story-ticker" aria-label="Editor's picks">
         <div class="ticker-track">
-          <span data-editable="ticker-1">IT’S OFFICIAL: WE’VE ENTERED THE GREAT MILLENNIAL CAREER CRISIS</span><i aria-hidden="true">✳</i>
-          <span data-editable="ticker-2">10 JOYS THAT ARE MAKING WOMEN HAPPIER, HEALTHIER, AND WEALTHIER</span><i aria-hidden="true">✳</i>
+          <span data-editable="ticker-1">IT’S OFFICIAL: WE’VE ENTERED THE GREAT MILLENNIAL CAREER CRISIS</span><i>✳</i>
+          <span data-editable="ticker-2">10 JOYS THAT ARE MAKING WOMEN HAPPIER, HEALTHIER, AND WEALTHIER</span><i>✳</i>
           <span data-editable="ticker-3">THE BEST JOBS FOR WORK-LIFE BALANCE IN 2026</span><i>✳</i>
           <span data-editable="ticker-4">IT’S OFFICIAL: WE’VE ENTERED THE GREAT MILLENNIAL CAREER CRISIS</span>
         </div>
@@ -191,19 +191,19 @@
       <section class="quote-band" id="about">
         <div class="quote-inner wrap">
           <span class="quote-flower" aria-hidden="true">✳</span>
-          <p data-editable="about-quote">“Here’s to figuring it out, finding your people, and making a life that feels like your own.”</p>
-          <span class="quote-credit">A NOTE FROM THE EVERYGIRL</span>
+              <p data-editable="about-quote">“Here’s to figuring it out, finding your people, and making a life that feels like your own.”</p>
+              <span class="quote-credit" data-editable="quote-credit">A NOTE FROM THE EDITORS</span>
         </div>
       </section>
 
       <section class="newsletter wrap" id="newsletter">
-        <div class="newsletter-mark" aria-hidden="true">the<br />everygirl<br /><span>✳</span></div>
+        <div class="newsletter-mark" aria-hidden="true">the<br />daily edit<br /><span>✳</span></div>
         <div class="newsletter-copy">
-          <p class="eyebrow">A LITTLE GOOD IN YOUR INBOX</p>
+          <p class="eyebrow" data-editable="newsletter-kicker">A LITTLE GOOD IN YOUR INBOX</p>
           <h2>Make your inbox<br /><em>a happier place.</em></h2>
         </div>
         <form class="newsletter-form">
-          <label for="email">The best of The Everygirl, delivered weekly.</label>
+          <label for="email" data-editable="newsletter-label">The best reads from The Daily Edit, delivered weekly.</label>
           <div class="email-row">
             <input id="email" name="email" type="email" placeholder="Your email address" required />
             <button type="submit" aria-label="Subscribe">I'M IN <span aria-hidden="true">→</span></button>
@@ -215,20 +215,27 @@
 
     <footer class="site-footer">
       <div class="footer-top wrap">
-        <a class="wordmark footer-wordmark" href="#" data-editable="footer-site-name">the everygirl</a>
-        <p>For every version of you.</p>
+        <a class="wordmark footer-wordmark" href="#home" data-editable="footer-site-name">the daily edit</a>
+        <p data-editable="footer-tagline">For every version of you.</p>
         <a class="back-to-top" href="#">BACK TO TOP ↑</a>
       </div>
       <div class="footer-bottom wrap">
-        <span>© 2026 THE EVERYGIRL</span>
-        <span>LIVE WELL. BE WELL. DO WELL.</span>
+        <span data-editable="footer-copyright">© 2026 THE DAILY EDIT</span>
+        <span data-editable="footer-motto">LIVE WELL. FIND YOUR OWN WAY.</span>
         <div><a href="#about">INSTAGRAM</a><a href="#about">PINTEREST</a></div>
       </div>
     </footer>
 
     <aside class="editor-toolbar" aria-label="Site editor" hidden>
-      <div class="editor-status"><span class="editor-dot"></span><span>EDIT MODE</span></div>
-      <p>Click any text to edit it, or click a photo to replace it.</p>
+      <div class="editor-status"><span class="editor-dot"></span><span class="editor-connection">EDIT MODE · LOCAL DRAFT</span></div>
+      <p>Click text to edit. Photo and text changes become public after saving to GitHub.</p>
+      <label class="github-token-label" for="github-token">GitHub fine-grained token</label>
+      <p class="github-token-help">Create a token limited to this repository with Contents: read and write. It stays in this tab only.</p>
+      <div class="github-connect-row">
+        <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" />
+        <button class="github-connect" type="button">CONNECT</button>
+      </div>
+      <p class="github-save-status" aria-live="polite">Connect GitHub before publishing changes.</p>
       <label class="image-editor-label" for="image-url">Selected photo URL</label>
       <div class="image-editor-row">
         <input id="image-url" type="url" placeholder="Click a photo, then paste an https image URL" />
@@ -237,7 +244,7 @@
       <p class="image-editor-status" aria-live="polite">Choose any photo on the page to replace it.</p>
       <div class="editor-actions">
         <button class="add-story" type="button">＋ ADD STORY</button>
-        <button class="save-changes" type="button">SAVE CHANGES</button>
+        <button class="save-changes" type="button" disabled>SAVE TO GITHUB</button>
       </div>
     </aside>
 
