@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Fresh ideas for a life you love. Stories on style, wellness, career, home, and everything in between."
+    />
+    <title>The Everygirl — A little inspiration for every day</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body id="home">
+    <div class="announcement">
+      <span>FRESH IDEAS FOR A LIFE YOU LOVE</span>
+      <a href="#newsletter">A little good in your inbox <span aria-hidden="true">↗</span></a>
+    </div>
+
+    <header class="site-header">
+      <div class="header-top">
+        <button class="icon-button search-toggle" type="button" aria-label="Open search" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.8" cy="10.8" r="6.8"></circle>
+            <path d="m16 16 5 5"></path>
+          </svg>
+        </button>
+        <a class="wordmark" href="#home" aria-label="The Everygirl home" data-editable="site-name">the everygirl</a>
+        <div class="header-actions">
+          <a class="about-link" href="#about">ABOUT US</a>
+          <button class="edit-toggle" type="button" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m15.5 5.5 3 3M4 20l4.2-.8L19.3 8a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20Z"></path>
+            </svg>
+            <span>Edit site</span>
+          </button>
+        </div>
+      </div>
+      <form class="search-bar" role="search" hidden>
+        <label class="visually-hidden" for="site-search">Search stories</label>
+        <input id="site-search" type="search" placeholder="Search stories, topics, and more…" />
+        <button type="button" class="search-close" aria-label="Close search">×</button>
+      </form>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#home" data-category-link="all">HOME</a>
+        <a href="#category/style" data-category-link="STYLE">STYLE</a>
+        <a href="#category/career" data-category-link="CAREER">CAREER & FINANCE</a>
+        <a href="#category/home" data-category-link="HOME">HOME & LIVING</a>
+        <a href="#category/wellness" data-category-link="WELLNESS">WELLNESS</a>
+        <a href="#category/food" data-category-link="FOOD">FOOD</a>
+        <a href="#category/culture" data-category-link="CULTURE">CULTURE</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="editorial-lead wrap" aria-label="Featured stories">
+        <article class="lead-story">
+          <a class="lead-image" href="#story-4" data-open-story data-story-id="4" aria-label="Read The best Halloween costume ideas for 2026">
+            <img data-image-key="lead-image"
+              src="https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?auto=format&fit=crop&w=1400&q=85"
+              alt="A colorful, playful Halloween costume inspiration"
+            />
+            <span class="lead-image-label">THE EVERYGIRL EDIT</span>
+          </a>
+          <p class="story-category" data-editable="lead-category">THINGS TO DO</p>
+          <h1 data-editable="lead-title">The Best Halloween Costume Ideas for 2026</h1>
+          <p class="lead-excerpt" data-editable="lead-excerpt">No matter what kind of costume you want to rock this year, 2026 has given us plenty of pop culture moments to choose from.</p>
+          <a class="text-link" href="#story-4" data-open-story data-story-id="4">READ THE STORY <span aria-hidden="true">→</span></a>
+        </article>
+        <aside class="now-panel" aria-labelledby="now-title">
+          <h2 id="now-title"><span data-editable="now-title">NEW</span> <em>and</em> <span data-editable="now-subtitle">NOW</span></h2>
+          <a class="now-story" href="#story-1" data-open-story data-story-id="1">
+            <img data-image-key="now-1-image" src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=280&q=75" alt="" />
+            <span><small data-editable="now-1-category">HEALTHY LIVING</small><strong data-editable="now-1-title">The 90-Day “Winter Arc” Challenge to Glow Up Before the New Year</strong></span>
+          </a>
+          <a class="now-story" href="#story-6" data-open-story data-story-id="6">
+            <img data-image-key="now-2-image" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=280&q=75" alt="" />
+            <span><small data-editable="now-2-category">ZODIAC</small><strong data-editable="now-2-title">It’s Mercury Retrograde Again—Here’s How Each Zodiac Sign Should Brace Themselves</strong></span>
+          </a>
+          <a class="now-story" href="#story-2" data-open-story data-story-id="2">
+            <img data-image-key="now-3-image" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=280&q=75" alt="" />
+            <span><small data-editable="now-3-category">THINGS TO DO</small><strong data-editable="now-3-title">15 Ways I Channel Ina Garten in My Kitchen, Closet, and Lifestyle</strong></span>
+          </a>
+        </aside>
+      </section>
+
+      <div class="story-ticker" aria-label="Editor's picks">
+        <div class="ticker-track">
+          <span data-editable="ticker-1">IT’S OFFICIAL: WE’VE ENTERED THE GREAT MILLENNIAL CAREER CRISIS</span><i aria-hidden="true">✳</i>
+          <span data-editable="ticker-2">10 JOYS THAT ARE MAKING WOMEN HAPPIER, HEALTHIER, AND WEALTHIER</span><i aria-hidden="true">✳</i>
+          <span data-editable="ticker-3">THE BEST JOBS FOR WORK-LIFE BALANCE IN 2026</span><i>✳</i>
+          <span data-editable="ticker-4">IT’S OFFICIAL: WE’VE ENTERED THE GREAT MILLENNIAL CAREER CRISIS</span>
+        </div>
+      </div>
+
+      <section class="seasonal-section wrap" aria-labelledby="season-title">
+        <div class="season-heading"><span aria-hidden="true">🍂</span><h2 id="season-title" data-editable="season-title">Fall</h2><span aria-hidden="true">🍂</span></div>
+        <div class="season-grid">
+          <a href="#story-1" data-open-story data-story-id="1"><img data-image-key="season-1-image" src="https://images.unsplash.com/photo-1607453998774-d533f65dac99?auto=format&fit=crop&w=520&q=80" alt="A playful costume idea" /><span data-editable="season-1">Costumes worth staying in for</span></a>
+          <a href="#story-2" data-open-story data-story-id="2"><img data-image-key="season-2-image" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=520&q=80" alt="A cozy home ready for fall" /><span data-editable="season-2">Make your home feel like fall</span></a>
+          <a href="#story-3" data-open-story data-story-id="3"><img data-image-key="season-3-image" src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=520&q=80" alt="A warm autumn meal" /><span data-editable="season-3">The coziest thing on the menu</span></a>
+          <a href="#story-5" data-open-story data-story-id="5"><img data-image-key="season-4-image" src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=520&q=80" alt="Autumn fashion on display" /><span data-editable="season-4">A few fall favorites, revisited</span></a>
+          <a href="#story-4" data-open-story data-story-id="4"><img data-image-key="season-5-image" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=520&q=80" alt="An easy fall outfit" /><span data-editable="season-5">The outfit formula we love</span></a>
+        </div>
+      </section>
+
+      <div id="home-page">
+      <section class="featured-section wrap" id="latest-stories" aria-labelledby="featured-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">THE STORIES ON OUR MINDS</p>
+            <h2 id="featured-title">A little of <em>everything.</em></h2>
+          </div>
+          <a class="text-link" href="#latest-stories">ALL THE LATEST <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="story-grid" id="story-grid" aria-live="polite">
+          <article class="story-card story-card-large" data-story-card data-category="WELLNESS">
+            <a class="story-image" href="#story-1" data-open-story aria-label="Read The small morning ritual that makes the whole day feel different">
+              <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1100&q=85" alt="A peaceful yoga practice in warm morning light" />
+              <span class="image-tag">A MOMENT FOR YOU</span>
+            </a>
+            <p class="story-category" data-editable="story-1-category">WELLNESS</p>
+            <h3><a href="#story-1" data-open-story data-editable="story-1-title">The small morning ritual that makes the whole day feel different</a></h3>
+            <p class="story-excerpt" data-editable="story-1-excerpt">No perfect routine required. Just a few quiet minutes to find your footing before the day begins.</p>
+            <a class="story-read" href="#story-1" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="story-card" data-story-card data-category="HOME">
+            <a class="story-image" href="#story-2" data-open-story aria-label="Read A softer, slower way to make a home feel like yours">
+              <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=850&q=85" alt="A warm, thoughtfully styled living room" loading="lazy" />
+            </a>
+            <p class="story-category" data-editable="story-2-category">HOME & LIVING</p>
+            <h3><a href="#story-2" data-open-story data-editable="story-2-title">A softer, slower way to make a home feel like yours</a></h3>
+            <p class="story-excerpt" data-editable="story-2-excerpt">The details worth collecting, the corners worth keeping, and the joy in making space your own.</p>
+            <a class="story-read" href="#story-2" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="story-card" data-story-card data-category="FOOD">
+            <a class="story-image" href="#story-3" data-open-story aria-label="Read The no-fuss lunch we keep making on repeat">
+              <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=850&q=85" alt="A colorful, fresh meal with greens and vegetables" loading="lazy" />
+            </a>
+            <p class="story-category" data-editable="story-3-category">FOOD</p>
+            <h3><a href="#story-3" data-open-story data-editable="story-3-title">The no-fuss lunch we keep making on repeat</a></h3>
+            <p class="story-excerpt" data-editable="story-3-excerpt">A bright, feel-good bowl that comes together with whatever is already in your fridge.</p>
+            <a class="story-read" href="#story-3" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="story-card" data-story-card data-category="STYLE">
+            <a class="story-image" href="#story-4" data-open-story aria-label="Read The easy outfit formula we lean on when we have nothing to wear">
+              <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=850&q=85" alt="A thoughtfully styled everyday outfit" loading="lazy" />
+            </a>
+            <p class="story-category" data-editable="story-4-category">STYLE</p>
+            <h3><a href="#story-4" data-open-story data-editable="story-4-title">The easy outfit formula we lean on when we have nothing to wear</a></h3>
+            <p class="story-excerpt" data-editable="story-4-excerpt">A few dependable pieces, one personal detail, and a little less staring into the closet.</p>
+            <a class="story-read" href="#story-4" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="story-card" data-story-card data-category="CAREER">
+            <a class="story-image" href="#story-5" data-open-story aria-label="Read Small ways to make your workday feel more like your own">
+              <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=850&q=85" alt="A light-filled, welcoming workspace" loading="lazy" />
+            </a>
+            <p class="story-category" data-editable="story-5-category">CAREER & FINANCE</p>
+            <h3><a href="#story-5" data-open-story data-editable="story-5-title">Small ways to make your workday feel more like your own</a></h3>
+            <p class="story-excerpt" data-editable="story-5-excerpt">A few realistic resets for a more considered, more human kind of workday.</p>
+            <a class="story-read" href="#story-5" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="story-card" data-story-card data-category="CULTURE">
+            <a class="story-image" href="#story-6" data-open-story aria-label="Read A few good things to read, watch, and talk about this week">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=850&q=85" alt="A candid portrait in natural light" loading="lazy" />
+            </a>
+            <p class="story-category" data-editable="story-6-category">CULTURE</p>
+            <h3><a href="#story-6" data-open-story data-editable="story-6-title">A few good things to read, watch, and talk about this week</a></h3>
+            <p class="story-excerpt" data-editable="story-6-excerpt">A thoughtful little list for your next free afternoon or group chat.</p>
+            <a class="story-read" href="#story-6" data-open-story>READ THE STORY <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+        <p class="empty-state" hidden>No stories match that search. Try another topic.</p>
+      </section>
+      </div>
+
+      <section class="category-page wrap" id="category-page" hidden aria-labelledby="category-title">
+        <p class="eyebrow" data-editable="category-kicker">A LITTLE OF WHAT YOU LOVE</p>
+        <h1 id="category-title">Style</h1>
+        <p class="category-intro" data-editable="category-intro">Fresh ideas, thoughtful stories, and a little inspiration for every day.</p>
+        <div class="category-grid" id="category-grid"></div>
+        <p class="category-empty" hidden>No stories here just yet. Check back soon.</p>
+      </section>
+
+      <section class="quote-band" id="about">
+        <div class="quote-inner wrap">
+          <span class="quote-flower" aria-hidden="true">✳</span>
+          <p data-editable="about-quote">“Here’s to figuring it out, finding your people, and making a life that feels like your own.”</p>
+          <span class="quote-credit">A NOTE FROM THE EVERYGIRL</span>
+        </div>
+      </section>
+
+      <section class="newsletter wrap" id="newsletter">
+        <div class="newsletter-mark" aria-hidden="true">the<br />everygirl<br /><span>✳</span></div>
+        <div class="newsletter-copy">
+          <p class="eyebrow">A LITTLE GOOD IN YOUR INBOX</p>
+          <h2>Make your inbox<br /><em>a happier place.</em></h2>
+        </div>
+        <form class="newsletter-form">
+          <label for="email">The best of The Everygirl, delivered weekly.</label>
+          <div class="email-row">
+            <input id="email" name="email" type="email" placeholder="Your email address" required />
+            <button type="submit" aria-label="Subscribe">I'M IN <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="newsletter-status" aria-live="polite">No noise, just the good stuff. Unsubscribe anytime.</p>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-top wrap">
+        <a class="wordmark footer-wordmark" href="#" data-editable="footer-site-name">the everygirl</a>
+        <p>For every version of you.</p>
+        <a class="back-to-top" href="#">BACK TO TOP ↑</a>
+      </div>
+      <div class="footer-bottom wrap">
+        <span>© 2026 THE EVERYGIRL</span>
+        <span>LIVE WELL. BE WELL. DO WELL.</span>
+        <div><a href="#about">INSTAGRAM</a><a href="#about">PINTEREST</a></div>
+      </div>
+    </footer>
+
+    <aside class="editor-toolbar" aria-label="Site editor" hidden>
+      <div class="editor-status"><span class="editor-dot"></span><span>EDIT MODE</span></div>
+      <p>Click any text to edit it, or click a photo to replace it.</p>
+      <label class="image-editor-label" for="image-url">Selected photo URL</label>
+      <div class="image-editor-row">
+        <input id="image-url" type="url" placeholder="Click a photo, then paste an https image URL" />
+        <button class="update-image" type="button">UPDATE</button>
+      </div>
+      <p class="image-editor-status" aria-live="polite">Choose any photo on the page to replace it.</p>
+      <div class="editor-actions">
+        <button class="add-story" type="button">＋ ADD STORY</button>
+        <button class="save-changes" type="button">SAVE CHANGES</button>
+      </div>
+    </aside>
+
+    <dialog class="story-dialog">
+      <form class="story-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">GROW YOUR JOURNAL</p>
+            <h2>Add a story</h2>
+          </div>
+          <button class="dialog-close" type="button" aria-label="Close">×</button>
+        </div>
+        <label for="story-title">Story title</label>
+        <input id="story-title" name="title" maxlength="120" required placeholder="Give your story a title" />
+        <label for="story-category">Category</label>
+        <select id="story-category" name="category">
+          <option>STYLE</option><option>CAREER</option><option>HOME</option><option>WELLNESS</option><option>FOOD</option><option>CULTURE</option>
+        </select>
+        <label for="story-excerpt">A short introduction</label>
+        <textarea id="story-excerpt" name="excerpt" rows="3" maxlength="240" required placeholder="What should readers know?"></textarea>
+        <label for="story-body">Full story</label>
+        <textarea id="story-body" name="body" rows="6" required placeholder="Write your story here. Separate paragraphs with a blank line."></textarea>
+        <label for="story-image">Image URL <span>(optional, use an https link)</span></label>
+        <input id="story-image" name="image" type="url" placeholder="https://…" />
+        <button class="dialog-submit" type="submit">ADD STORY <span aria-hidden="true">→</span></button>
+      </form>
+    </dialog>
+
+    <dialog class="article-dialog" aria-labelledby="article-title">
+      <button class="article-close" type="button" aria-label="Close story">×</button>
+      <article class="article-view"></article>
+    </dialog>
+  </body>
+</html>
